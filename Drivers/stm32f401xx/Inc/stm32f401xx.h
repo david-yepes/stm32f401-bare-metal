@@ -119,23 +119,6 @@
  **************************************************************************************/
 
 /*
- * Peripheral register definition structure for GPIO
- */
-typedef struct
-{
-	volatile uint32_t MODER;	/* GPIO port mode register 					Address offset: 0x00 */
-	volatile uint32_t OTYPER;	/* GPIO port output type register			Address offset: 0x04 */
-	volatile uint32_t OSPEEDR;	/* GPIO port output speed register 			Address offset: 0x08 */
-	volatile uint32_t PUPDR;	/* GPIO port pull-up/pull-down register		Address offset: 0x0C */
-	volatile uint32_t IDR;		/* GPIO port input data register 			Address offset: 0x10 */
-	volatile uint32_t ODR;		/* GPIO port output data register			Address offset: 0x14 */
-	volatile uint32_t BSRR;		/* GPIO port bit set/reset register			Address offset: 0x18 */
-	volatile uint32_t LCKR;		/* GPIO port configuration lock register	Address offset: 0x1C */
-	volatile uint32_t AFRL;		/* Alternate function low register			Address offset: 0x20 */
-	volatile uint32_t AFRH;		/* Alternate function high register			Address offset: 0x24 */
-} GPIO_RegDef_t;
-
-/*
  * Peripheral register definition structure for RCC
  */
 typedef struct
@@ -206,13 +189,6 @@ typedef struct
 /*
  *  Peripheral definitions (Peripheral base addresses typecasted to xxx_RegDef_t)
  */
-
-#define GPIOA	( (GPIO_RegDef_t*)GPIOA_BASEADDR )
-#define GPIOB	( (GPIO_RegDef_t*)GPIOB_BASEADDR )
-#define GPIOC	( (GPIO_RegDef_t*)GPIOC_BASEADDR )
-#define GPIOD	( (GPIO_RegDef_t*)GPIOD_BASEADDR )
-#define GPIOE	( (GPIO_RegDef_t*)GPIOE_BASEADDR )
-#define GPIOH	( (GPIO_RegDef_t*)GPIOH_BASEADDR )
 
 #define RCC		( (RCC_RegDef_t*)RCC_BASEADDR )
 #define EXTI	( (EXTI_RegDef_t*)EXTI_BASEADDR )
