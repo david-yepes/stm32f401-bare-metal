@@ -10,30 +10,6 @@
 /**
  * @fn			gpio_peri_clock_control
  *
- * @brief		Internal function to get the IRQ number from the GPIO pin number
- *
- * @param		p_gpio_handle Pointer to the handle of GPIO pin.
- *
- * @return		IRQ number
- *
- * @note		None
- *
- **/
-static uint8_t gpio_get_irq_number(const gpio_handle_t *p_gpio_handle) {
-	gpio_pin_number_t pin_number = p_gpio_handle->gpio_pin_config.gpio_pin_number;
-	if (pin_number <= 4) {
-		uint8_t irq_array[] = {IRQ_NO_EXTI0, IRQ_NO_EXTI1, IRQ_NO_EXTI2, IRQ_NO_EXTI3, IRQ_NO_EXTI4};
-		return irq_array[pin_number];
-	} else if (pin_number <= 9) {
-		return IRQ_NO_EXTI9_5;
-	} else {
-		return IRQ_NO_EXTI15_10;
-	}
-}
-
-/**
- * @fn			gpio_peri_clock_control
- *
  * @brief		Enables or disables peripheral clock for the given GPIO port
  *
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
@@ -104,7 +80,7 @@ void gpio_init(gpio_handle_t *p_gpio_handle, gpio_reg_def_t *const p_gpio_x, con
 		p_gpio_x->MODER.ALLBITS &= ~( 0x03 << (2 * gpio_pin_config->gpio_pin_number) );	// Clear the 2 bits of the MODER field
 		p_gpio_x->MODER.ALLBITS |= ( gpio_pin_config->gpio_pin_mode << (2 * gpio_pin_config->gpio_pin_number) );	// Set the MODER field value
 	} else {
-		// Interrupt mode
+		// Interrupt generator mode. To generate the interrupt, the interrupt line should be configured and enabled:
 		// 1. Configure interrupt trigger type: falling, rising or both of them
 		if (gpio_pin_config->gpio_pin_mode == GPIO_MODE_EXTI_FALLING_TRIGGER) {
 			EXTI->RTSR &= ~(1 << gpio_pin_config->gpio_pin_number);	// Clear the RTSR bit
@@ -283,16 +259,42 @@ void gpio_toggle_output_pin(gpio_handle_t *p_gpio_handle)
 }
 
 /**
+ * @fn			gpio_get_irq_number
+ *
+ * @brief		Internal function to get the IRQ number from the GPIO pin number
+ *
+ * @param		p_gpio_handle Pointer to the handle of GPIO pin.
+ *
+ * @return		IRQ number
+ *
+ * @note		None
+ *
+ **/
+static uint8_t gpio_get_irq_number(const gpio_handle_t *p_gpio_handle) {
+	gpio_pin_number_t pin_number = p_gpio_handle->gpio_pin_config.gpio_pin_number;
+	if (pin_number <= 4) {
+		uint8_t irq_array[] = {IRQ_NO_EXTI0, IRQ_NO_EXTI1, IRQ_NO_EXTI2, IRQ_NO_EXTI3, IRQ_NO_EXTI4};
+		return irq_array[pin_number];
+	} else if (pin_number <= 9) {
+		return IRQ_NO_EXTI9_5;
+	} else {
+		return IRQ_NO_EXTI15_10;
+	}
+}
+
+/**
  * @fn			gpio_irq_interrupt_config
  *
- * @brief		Enables or disables an interrupt
+ * @brief		Enables or disables an interrupt. 
  *
  * @param		irq_number Number or position of the interrupt in the NVIC Vector Table (0-84)
  * @param		en_or_di Either enable or disable an interrupt, use ENABLE or DISABLE macros
  *
  * @return		None
  *
- * @note		None
+ * @note		Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
+*				external interrupt controller (EXTI) so that an interrupt coming from one of the 
+*				lines can be correctly acknowledged.
  *
  **/
 void gpio_irq_interrupt_config(const gpio_handle_t *p_gpio_handle, uint8_t en_or_di)
@@ -367,3 +369,157 @@ void gpio_irq_handling(gpio_pin_number_t pin_number)
 		EXTI->PR |= (1 << pin_number);	// This bit is cleared by programming it to ‘1’.
 	}
 }
+
+/** User IRQ handler callback functions
+ * 
+ * irq_callback[0] --> EXTI0_IRQHandler
+ *                 ...
+ * irq_callback[4] --> EXTI4_IRQHandler
+ * irq_callback[5],  irq_callback[6],  ... irq_callback[9]  --> EXTI9_5_IRQHandler
+ * irq_callback[10], irq_callback[11], ... irq_callback[15] --> EXTI15_10_IRQHandler
+ * 
+ **/
+static irq_handler_callback_t irq_callback[16];
+
+/**
+ * @fn			gpio_irq_callback_register
+ *
+ * @brief		Register the user callback function into its corresponding EXTI IRQ handler  
+ *
+ * @param		p_gpio_handle Pointer to the handle of GPIO pin
+ * @param		callback Pointer to user callback function, it must be a function that 
+ * 					     returns void whit no parameters.
+ *
+ * @return		None
+ *
+ * @note		None
+ *
+ **/
+void gpio_irq_callback_register(const gpio_handle_t *p_gpio_handle, irq_handler_callback_t callback) {	
+	irq_callback[p_gpio_handle->gpio_pin_config.gpio_pin_number] = callback;
+}
+
+/**
+ * @fn			EXTI0_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Line 0 IRQ Handler and executes the user callback 
+ * 				function if it's been registered.
+ *
+ **/
+void EXTI0_IRQHandler(void) {
+	if (EXTI->PR & (1 << 0)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[0] != NULL) irq_callback[0]();
+		EXTI->PR |= (1 << 0);	// This bit is cleared by programming it to ‘1’.
+	}	
+}
+
+/**
+ * @fn			EXTI1_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Line 1 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI1_IRQHandler(void) {
+	if (EXTI->PR & (1 << 1)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[1] != NULL) irq_callback[1]();
+		EXTI->PR |= (1 << 1);	// This bit is cleared by programming it to ‘1’.
+	}
+}
+
+/**
+ * @fn			EXTI2_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Line 2 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI2_IRQHandler(void) {
+	if (EXTI->PR & (1 << 2)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[2] != NULL) irq_callback[2]();
+		EXTI->PR |= (1 << 2);	// This bit is cleared by programming it to ‘1’.
+	}
+}
+
+/**
+ * @fn			EXTI3_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Line 3 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI3_IRQHandler(void) {
+	if (EXTI->PR & (1 << 3)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[3] != NULL) irq_callback[3]();
+		EXTI->PR |= (1 << 3);	// This bit is cleared by programming it to ‘1’.
+	}
+}
+
+/**
+ * @fn			EXTI4_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Line 4 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI4_IRQHandler(void) {
+	if (EXTI->PR & (1 << 4)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[4] != NULL) irq_callback[4]();
+		EXTI->PR |= (1 << 4);	// This bit is cleared by programming it to ‘1’.
+	}
+}
+
+/**
+ * @fn			EXTI9_5_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Lines 9:5 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI9_5_IRQHandler(void) {
+	if (EXTI->PR & (1 << 5)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[5] != NULL) irq_callback[5]();
+		EXTI->PR |= (1 << 5);	// This bit is cleared by programming it to ‘1’.
+	} else if (EXTI->PR & (1 << 6)) {
+		if (irq_callback[6] != NULL) irq_callback[6]();
+		EXTI->PR |= (1 << 6);
+	} else if (EXTI->PR & (1 << 7)) {
+		if (irq_callback[7] != NULL) irq_callback[7]();
+		EXTI->PR |= (1 << 7);
+	} else if (EXTI->PR & (1 << 8)) {
+		if (irq_callback[8] != NULL) irq_callback[8]();
+		EXTI->PR |= (1 << 8);
+	} else if (EXTI->PR & (1 << 9)) {
+		if (irq_callback[9] != NULL) irq_callback[9]();
+		EXTI->PR |= (1 << 9);
+	}
+}
+
+/**
+ * @fn			EXTI15_10_IRQHandler
+ *
+ * @brief		Overrides the weak EXTI Lines 15:10 IRQ Handler and executes the user callback
+ * 	            function if it's been registered.
+ *
+ **/
+void EXTI15_10_IRQHandler(void) {
+	if (EXTI->PR & (1 << 10)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
+		if (irq_callback[10] != NULL) irq_callback[10]();
+		EXTI->PR |= (1 << 10);	// This bit is cleared by programming it to ‘1’.
+	} else if (EXTI->PR & (1 << 11)) {
+		if (irq_callback[11] != NULL) irq_callback[11]();
+		EXTI->PR |= (1 << 11);
+	} else if (EXTI->PR & (1 << 12)) {
+		if (irq_callback[12] != NULL) irq_callback[12]();
+		EXTI->PR |= (1 << 12);
+	} else if (EXTI->PR & (1 << 13)) {
+		if (irq_callback[13] != NULL) irq_callback[13]();
+		EXTI->PR |= (1 << 13);
+	} else if (EXTI->PR & (1 << 14)) {
+		if (irq_callback[14] != NULL) irq_callback[14]();
+		EXTI->PR |= (1 << 14);
+	} else if (EXTI->PR & (1 << 15)) {
+		if (irq_callback[15] != NULL) irq_callback[15]();
+		EXTI->PR |= (1 << 15);
+	}
+} 

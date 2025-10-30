@@ -10,6 +10,7 @@
 
 #include "stm32f401xx.h"
 
+#include <stddef.h>
 #include <stdint.h>
 
 /*
@@ -422,6 +423,8 @@ typedef struct
 } gpio_handle_t;
 //typedef struct gpio_handle_t gpio_handle_t;	// Opaque type 
 
+typedef void (*irq_handler_callback_t)( void );
+
 /************************************************************************************************
  *
  * APIs supported by this driver
@@ -443,5 +446,6 @@ void gpio_toggle_output_pin(gpio_handle_t *p_gpio_handle);
 void gpio_irq_interrupt_config(const gpio_handle_t *p_gpio_handle, uint8_t en_or_di);
 void gpio_irq_priority_config(const gpio_handle_t *p_gpio_handle, uint8_t irq_priority);
 void gpio_irq_handling(gpio_pin_number_t pin_number);
+void gpio_irq_callback_register(const gpio_handle_t *p_gpio_handle, irq_handler_callback_t callback);
 
 #endif /* INC_STM32F401XX_GPIO_DRIVER_H_ */
