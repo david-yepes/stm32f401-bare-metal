@@ -14,11 +14,7 @@
  *
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
  * @param		en_or_di Either enable or disable the GPIO peripheral, use ENABLE or DISABLE macros
- *
- * @return		None
- *
- * @note		None
- *
+ * 
  **/
 void gpio_peri_clock_control(const gpio_reg_def_t *p_gpio_x, uint8_t en_or_di)
 {
@@ -48,8 +44,6 @@ void gpio_peri_clock_control(const gpio_reg_def_t *p_gpio_x, uint8_t en_or_di)
  * @param       p_gpio_x Pointer to the base address of the GPIO peripheral, possible values: 
  * 						 GPIOA, GPIOB, GPIOC, GPIOD, GPIOE o GPIOH.
  * @param		gpio_pin_config This structure holds GPIO pin configuration settings. 
- *
- * @return		None
  *
  * @note		Provided that all the gpio pins share the same configuration registers it makes sense
  * 				to use the ALL_BITS variable of each register instead of the bit fields in order to have
@@ -144,10 +138,6 @@ void gpio_init(gpio_handle_t *p_gpio_handle, gpio_reg_def_t *const p_gpio_x, con
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  *
- * @return		None
- *
- * @note		None
- *
  **/
 void gpio_deinit(const gpio_handle_t *p_gpio_handle)
 {
@@ -166,10 +156,8 @@ void gpio_deinit(const gpio_handle_t *p_gpio_handle)
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  *
- * @return		0 if the GPIO input level is 0 or
- * 				1 if the GPIO input level is 1
- *
- * @note		None
+ * @return		0 if the GPIO input level is 0.
+ * @return		1 if the GPIO input level is 1.
  *
  **/
 uint8_t gpio_read_from_input_pin(const gpio_handle_t *p_gpio_handle)
@@ -187,8 +175,6 @@ uint8_t gpio_read_from_input_pin(const gpio_handle_t *p_gpio_handle)
  *
  * @return		The current value of the given GPIO port, 16 bits
  *
- * @note		None
- *
  **/
 uint16_t gpio_read_from_input_port(const gpio_reg_def_t *p_gpio_x)
 {
@@ -203,10 +189,6 @@ uint16_t gpio_read_from_input_port(const gpio_reg_def_t *p_gpio_x)
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  * @param		value Output level. 0: low ; 1: high
- *
- * @return		None
- *
- * @note		None
  *
  **/
 void gpio_write_to_output_pin(gpio_handle_t *p_gpio_handle, uint8_t value)
@@ -226,10 +208,6 @@ void gpio_write_to_output_pin(gpio_handle_t *p_gpio_handle, uint8_t value)
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
  * @param		value Output level, 16 bits, 0: low ; 1: high
  *
- * @return		None
- *
- * @note		None
- *
  **/
 void gpio_write_to_output_port(gpio_reg_def_t *p_gpio_x, uint16_t value)
 {
@@ -242,8 +220,6 @@ void gpio_write_to_output_port(gpio_reg_def_t *p_gpio_x, uint16_t value)
  * @brief		Toggle output level
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
- *
- * @return		None
  *
  * @note		Provided that all the gpio pins share the same output data register it makes sense to use
  * 				the ALL_BITS variable of the ODR register instead of the bit fields. To perform the toggle 
@@ -290,8 +266,6 @@ static uint8_t gpio_get_irq_number(const gpio_handle_t *p_gpio_handle) {
  * @param		irq_number Number or position of the interrupt in the NVIC Vector Table (0-84)
  * @param		en_or_di Either enable or disable an interrupt, use ENABLE or DISABLE macros
  *
- * @return		None
- *
  * @note		Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
 *				external interrupt controller (EXTI) so that an interrupt coming from one of the 
 *				lines can be correctly acknowledged.
@@ -334,10 +308,6 @@ void gpio_irq_interrupt_config(const gpio_handle_t *p_gpio_handle, uint8_t en_or
  * @param		irq_number Number or position of the interrupt in the NVIC Vector Table (0-84)
  * @param		irq_priority Priority level (0 - 15), the less the level the higher the priority
  *
- * @return		None
- *
- * @note		None
- *
  **/
 void gpio_irq_priority_config(const gpio_handle_t *p_gpio_handle, uint8_t irq_priority) {
 	uint8_t irq_number = gpio_get_irq_number(p_gpio_handle);
@@ -357,10 +327,6 @@ void gpio_irq_priority_config(const gpio_handle_t *p_gpio_handle, uint8_t irq_pr
  * @brief		Clears the EXTI Pending Register corresponding to the pin number
  *
  * @param		pin_number GPIO pin number attached to the EXTI line
- *
- * @return		None
- *
- * @note		None
  *
  **/
 void gpio_irq_handling(gpio_pin_number_t pin_number)
@@ -389,10 +355,6 @@ static irq_handler_callback_t irq_callback[16];
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  * @param		callback Pointer to user callback function, it must be a function that 
  * 					     returns void whit no parameters.
- *
- * @return		None
- *
- * @note		None
  *
  **/
 void gpio_irq_callback_register(const gpio_handle_t *p_gpio_handle, irq_handler_callback_t callback) {	
@@ -480,16 +442,20 @@ void EXTI9_5_IRQHandler(void) {
 	if (EXTI->PR & (1 << 5)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[5] != NULL) irq_callback[5]();
 		EXTI->PR |= (1 << 5);	// This bit is cleared by programming it to ‘1’.
-	} else if (EXTI->PR & (1 << 6)) {
+	} 
+	if (EXTI->PR & (1 << 6)) {
 		if (irq_callback[6] != NULL) irq_callback[6]();
 		EXTI->PR |= (1 << 6);
-	} else if (EXTI->PR & (1 << 7)) {
+	} 
+	if (EXTI->PR & (1 << 7)) {
 		if (irq_callback[7] != NULL) irq_callback[7]();
 		EXTI->PR |= (1 << 7);
-	} else if (EXTI->PR & (1 << 8)) {
+	}
+	if (EXTI->PR & (1 << 8)) {
 		if (irq_callback[8] != NULL) irq_callback[8]();
 		EXTI->PR |= (1 << 8);
-	} else if (EXTI->PR & (1 << 9)) {
+	}
+	if (EXTI->PR & (1 << 9)) {
 		if (irq_callback[9] != NULL) irq_callback[9]();
 		EXTI->PR |= (1 << 9);
 	}
@@ -506,19 +472,24 @@ void EXTI15_10_IRQHandler(void) {
 	if (EXTI->PR & (1 << 10)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[10] != NULL) irq_callback[10]();
 		EXTI->PR |= (1 << 10);	// This bit is cleared by programming it to ‘1’.
-	} else if (EXTI->PR & (1 << 11)) {
+	} 
+	if (EXTI->PR & (1 << 11)) {
 		if (irq_callback[11] != NULL) irq_callback[11]();
 		EXTI->PR |= (1 << 11);
-	} else if (EXTI->PR & (1 << 12)) {
+	} 
+	if (EXTI->PR & (1 << 12)) {
 		if (irq_callback[12] != NULL) irq_callback[12]();
 		EXTI->PR |= (1 << 12);
-	} else if (EXTI->PR & (1 << 13)) {
+	} 
+	if (EXTI->PR & (1 << 13)) {
 		if (irq_callback[13] != NULL) irq_callback[13]();
 		EXTI->PR |= (1 << 13);
-	} else if (EXTI->PR & (1 << 14)) {
+	} 
+	if (EXTI->PR & (1 << 14)) {
 		if (irq_callback[14] != NULL) irq_callback[14]();
 		EXTI->PR |= (1 << 14);
-	} else if (EXTI->PR & (1 << 15)) {
+	} 
+	if (EXTI->PR & (1 << 15)) {
 		if (irq_callback[15] != NULL) irq_callback[15]();
 		EXTI->PR |= (1 << 15);
 	}
