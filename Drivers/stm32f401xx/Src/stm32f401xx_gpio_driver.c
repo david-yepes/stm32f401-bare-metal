@@ -1,21 +1,23 @@
-/*
- * stm32f401xx_gpio_driver.c
- *
- *  Created on: Aug 29, 2025
- *      Author: David Yepes
+/**
+ * @file stm32f401xx_gpio_driver.c
+ * @author David Yepes
+ * @brief 
+ * @version 0.1
+ * @date 2025-10-31
+ * 
+ * @copyright Copyright (c) 2025
+ * 
  */
 
 #include "stm32f401xx_gpio_driver.h"
 
 /**
- * @fn			gpio_peri_clock_control
- *
  * @brief		Enables or disables peripheral clock for the given GPIO port
  *
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
  * @param		en_or_di Either enable or disable the GPIO peripheral, use ENABLE or DISABLE macros
  * 
- **/
+ */
 void gpio_peri_clock_control(const gpio_reg_def_t *p_gpio_x, uint8_t en_or_di)
 {
 	if (en_or_di == ENABLE){
@@ -36,8 +38,6 @@ void gpio_peri_clock_control(const gpio_reg_def_t *p_gpio_x, uint8_t en_or_di)
 }
 
 /**
- * @fn			gpio_init
- *
  * @brief		Initializes and configures the  given GPIO port.
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin.
@@ -47,23 +47,22 @@ void gpio_peri_clock_control(const gpio_reg_def_t *p_gpio_x, uint8_t en_or_di)
  *
  * @note		Provided that all the gpio pins share the same configuration registers it makes sense
  * 				to use the ALL_BITS variable of each register instead of the bit fields in order to have
- * 				a simpler configuration process. To do that we need to use the next bitwise operations:
- * 
- * 				1. Clear the specific field bits using an inverted mask shifted to the position of 
+ * 				a simpler configuration process. To do that we need to use the next bitwise operations: 
+ * 				-# Clear the specific field bits using an inverted mask shifted to the position of 
  * 				   the field in the register: 
  * 
  * 				   REGISTER.ALLBITS &= ~( mask_value << (number_of_bits_of_the_field * pin_number) )
  * 
- * 				   mask_value = (2 exp number_of_bits_of_the_field) - 1. i.e: bits=1 mask_value=0x01 
- * 				   													          bits=2 mask_value=0x03
- * 																			  bits=3 mask_value=0x07
- * 
- * 			    2. Set the specific field bits using the desired value shifted to the position of
- * 				   the field in the register:
- *				   
+ * 				   Where mask_value = (2 exp number_of_bits_of_the_field) - 1. i.e: 
+ * 				    - bits=1 mask_value=0x01 
+ * 				   	- bits=2 mask_value=0x03
+ * 					- bits=3 mask_value=0x07 
+ *              
+ * 			    -# Set the specific field bits using the desired value shifted to the position of
+ * 				   the field in the register:\n				   
  *	               REGISTER.ALLBITS |= ( desired_value << (number_of_bits_of_the_field * pin_number) )
  *				   
- **/
+ */
 void gpio_init(gpio_handle_t *p_gpio_handle, gpio_reg_def_t *const p_gpio_x, const gpio_pin_config_t *gpio_pin_config)
 {	
 	// Enable the peripheral clock
@@ -132,13 +131,10 @@ void gpio_init(gpio_handle_t *p_gpio_handle, gpio_reg_def_t *const p_gpio_x, con
 }
 
 /**
- * @fn			gpio_deinit
- *
  * @brief		Resets the given GPIO port to the default state
- *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  *
- **/
+ */
 void gpio_deinit(const gpio_handle_t *p_gpio_handle)
 {
 	if 	    (p_gpio_handle->p_gpio_x == GPIOA) GPIOA_REG_RESET();
@@ -150,16 +146,12 @@ void gpio_deinit(const gpio_handle_t *p_gpio_handle)
 }
 
 /**
- * @fn			gpio_read_from_input_pin
- *
  * @brief		This function reads the current value from the given GPIO pin
- *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
- *
  * @return		0 if the GPIO input level is 0.
  * @return		1 if the GPIO input level is 1.
  *
- **/
+ */
 uint8_t gpio_read_from_input_pin(const gpio_handle_t *p_gpio_handle)
 {
 	uint8_t value = (uint8_t)( (p_gpio_handle->p_gpio_x->IDR.ALLBITS >> p_gpio_handle->gpio_pin_config.gpio_pin_number) & 0x00000001 );
@@ -167,15 +159,11 @@ uint8_t gpio_read_from_input_pin(const gpio_handle_t *p_gpio_handle)
 }
 
 /**
- * @fn			gpio_read_from_input_port
- *
  * @brief		This function reads the current value from the given GPIO port
- *
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
- *
  * @return		The current value of the given GPIO port, 16 bits
  *
- **/
+ */
 uint16_t gpio_read_from_input_port(const gpio_reg_def_t *p_gpio_x)
 {
 	uint16_t value = (uint16_t)p_gpio_x->IDR.ALLBITS;
@@ -183,14 +171,11 @@ uint16_t gpio_read_from_input_port(const gpio_reg_def_t *p_gpio_x)
 }
 
 /**
- * @fn			gpio_write_to_output_pin
- *
  * @brief		GPIO set output pin level
- *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
- * @param		value Output level. 0: low ; 1: high
+ * @param		value Output level. 0= low, 1= high
  *
- **/
+ */
 void gpio_write_to_output_pin(gpio_handle_t *p_gpio_handle, uint8_t value)
 {
 	if (value == GPIO_PIN_SET) {
@@ -201,51 +186,37 @@ void gpio_write_to_output_pin(gpio_handle_t *p_gpio_handle, uint8_t value)
 }
 
 /**
- * @fn			gpio_write_to_output_port
- *
  * @brief		GPIO set output port level
- *
  * @param		p_gpio_x Pointer to the base address of the GPIO peripheral
  * @param		value Output level, 16 bits, 0: low ; 1: high
  *
- **/
+ */
 void gpio_write_to_output_port(gpio_reg_def_t *p_gpio_x, uint16_t value)
 {
 	p_gpio_x->ODR.ALLBITS = value;
 }
 
 /**
- * @fn			gpio_toggle_output_pin
- *
  * @brief		Toggle output level
- *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
- *
  * @note		Provided that all the gpio pins share the same output data register it makes sense to use
  * 				the ALL_BITS variable of the ODR register instead of the bit fields. To perform the toggle 
- * 				action we can use the bitwise XOR operation between the current bit state and 1:
- * 				
- * 			    0 XOR 1 = 1, 
- * 				1 XOR 1 = 0
+ * 				action we can use the bitwise XOR operation between the current bit state and 1: 				
+ * 			     - 0 XOR 1 = 1 
+ * 				 - 1 XOR 1 = 0
  *
- **/
+ */
 void gpio_toggle_output_pin(gpio_handle_t *p_gpio_handle)
 {
 	p_gpio_handle->p_gpio_x->ODR.ALLBITS ^= (1 << p_gpio_handle->gpio_pin_config.gpio_pin_number);
 }
 
 /**
- * @fn			gpio_get_irq_number
- *
  * @brief		Internal function to get the IRQ number from the GPIO pin number
- *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin.
- *
  * @return		IRQ number
  *
- * @note		None
- *
- **/
+ */
 static uint8_t gpio_get_irq_number(const gpio_handle_t *p_gpio_handle) {
 	gpio_pin_number_t pin_number = p_gpio_handle->gpio_pin_config.gpio_pin_number;
 	if (pin_number <= 4) {
@@ -259,18 +230,14 @@ static uint8_t gpio_get_irq_number(const gpio_handle_t *p_gpio_handle) {
 }
 
 /**
- * @fn			gpio_irq_interrupt_config
- *
  * @brief		Enables or disables an interrupt. 
- *
  * @param		irq_number Number or position of the interrupt in the NVIC Vector Table (0-84)
  * @param		en_or_di Either enable or disable an interrupt, use ENABLE or DISABLE macros
- *
  * @note		Configure the enable and mask bits that control the NVIC IRQ channel mapped to the
-*				external interrupt controller (EXTI) so that an interrupt coming from one of the 
-*				lines can be correctly acknowledged.
+ *				external interrupt controller (EXTI) so that an interrupt coming from one of the 
+ *				lines can be correctly acknowledged.
  *
- **/
+ */
 void gpio_irq_interrupt_config(const gpio_handle_t *p_gpio_handle, uint8_t en_or_di)
 {
 	uint8_t irq_number = gpio_get_irq_number(p_gpio_handle);
@@ -301,14 +268,11 @@ void gpio_irq_interrupt_config(const gpio_handle_t *p_gpio_handle, uint8_t en_or
 }
 
 /**
- * @fn			gpio_irq_priority_config
- *
  * @brief		Configures the interrupt request priority level
- *
  * @param		irq_number Number or position of the interrupt in the NVIC Vector Table (0-84)
  * @param		irq_priority Priority level (0 - 15), the less the level the higher the priority
  *
- **/
+ */
 void gpio_irq_priority_config(const gpio_handle_t *p_gpio_handle, uint8_t irq_priority) {
 	uint8_t irq_number = gpio_get_irq_number(p_gpio_handle);
 	// Find out the IPR register
@@ -322,13 +286,10 @@ void gpio_irq_priority_config(const gpio_handle_t *p_gpio_handle, uint8_t irq_pr
 }
 
 /**
- * @fn			gpio_irq_handling
- *
  * @brief		Clears the EXTI Pending Register corresponding to the pin number
- *
  * @param		pin_number GPIO pin number attached to the EXTI line
  *
- **/
+ */
 void gpio_irq_handling(gpio_pin_number_t pin_number)
 {
 	if (EXTI->PR & (1 << pin_number)) {	// This bit is set when the selected edge event arrives on the external interrupt line.
@@ -336,7 +297,8 @@ void gpio_irq_handling(gpio_pin_number_t pin_number)
 	}
 }
 
-/** User IRQ handler callback functions
+/** 
+ * User IRQ handler callback functions
  * 
  * irq_callback[0] --> EXTI0_IRQHandler
  *                 ...
@@ -344,30 +306,26 @@ void gpio_irq_handling(gpio_pin_number_t pin_number)
  * irq_callback[5],  irq_callback[6],  ... irq_callback[9]  --> EXTI9_5_IRQHandler
  * irq_callback[10], irq_callback[11], ... irq_callback[15] --> EXTI15_10_IRQHandler
  * 
- **/
+ */
 static irq_handler_callback_t irq_callback[16];
 
 /**
- * @fn			gpio_irq_callback_register
- *
  * @brief		Register the user callback function into its corresponding EXTI IRQ handler  
  *
  * @param		p_gpio_handle Pointer to the handle of GPIO pin
  * @param		callback Pointer to user callback function, it must be a function that 
- * 					     returns void whit no parameters.
+ * 					     returns void with no parameters.
  *
- **/
+ */
 void gpio_irq_callback_register(const gpio_handle_t *p_gpio_handle, irq_handler_callback_t callback) {	
 	irq_callback[p_gpio_handle->gpio_pin_config.gpio_pin_number] = callback;
 }
 
 /**
- * @fn			EXTI0_IRQHandler
- *
  * @brief		Overrides the weak EXTI Line 0 IRQ Handler and executes the user callback 
  * 				function if it's been registered.
  *
- **/
+ */
 void EXTI0_IRQHandler(void) {
 	if (EXTI->PR & (1 << 0)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[0] != NULL) irq_callback[0]();
@@ -376,12 +334,10 @@ void EXTI0_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI1_IRQHandler
- *
  * @brief		Overrides the weak EXTI Line 1 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI1_IRQHandler(void) {
 	if (EXTI->PR & (1 << 1)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[1] != NULL) irq_callback[1]();
@@ -390,12 +346,10 @@ void EXTI1_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI2_IRQHandler
- *
  * @brief		Overrides the weak EXTI Line 2 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI2_IRQHandler(void) {
 	if (EXTI->PR & (1 << 2)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[2] != NULL) irq_callback[2]();
@@ -404,12 +358,10 @@ void EXTI2_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI3_IRQHandler
- *
  * @brief		Overrides the weak EXTI Line 3 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI3_IRQHandler(void) {
 	if (EXTI->PR & (1 << 3)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[3] != NULL) irq_callback[3]();
@@ -418,12 +370,10 @@ void EXTI3_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI4_IRQHandler
- *
  * @brief		Overrides the weak EXTI Line 4 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI4_IRQHandler(void) {
 	if (EXTI->PR & (1 << 4)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[4] != NULL) irq_callback[4]();
@@ -432,12 +382,10 @@ void EXTI4_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI9_5_IRQHandler
- *
  * @brief		Overrides the weak EXTI Lines 9:5 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI9_5_IRQHandler(void) {
 	if (EXTI->PR & (1 << 5)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[5] != NULL) irq_callback[5]();
@@ -462,12 +410,10 @@ void EXTI9_5_IRQHandler(void) {
 }
 
 /**
- * @fn			EXTI15_10_IRQHandler
- *
  * @brief		Overrides the weak EXTI Lines 15:10 IRQ Handler and executes the user callback
  * 	            function if it's been registered.
  *
- **/
+ */
 void EXTI15_10_IRQHandler(void) {
 	if (EXTI->PR & (1 << 10)) {	// This bit is set when the selected edge event arrives on the external interrupt line.		
 		if (irq_callback[10] != NULL) irq_callback[10]();
